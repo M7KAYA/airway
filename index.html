@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airway Assessment And Management</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #3498db 0%, #6dd5fa 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        transition: background 0.3s ease, color 0.3s ease;
+      }
+
+      #theme-toggle {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        padding: 8px 14px;
+        font-size: 14px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        background-color: #2980b9;
+        color: white;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.3s ease;
+        z-index: 1000;
+      }
+
+      #theme-toggle:hover {
+        background-color: #1c5980;
+      }
+
+      .container {
+        width: 420px;
+        background: #ffffff;
+        padding: 30px 25px;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      #question-text {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 25px;
+        color: #333;
+        padding: 14px 20px;
+        background-color: #e3f2fd;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
+        user-select: none;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      .btn-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 15px;
+      }
+
+      button {
+        padding: 12px;
+        font-size: 16px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        background-color: #3498db;
+        color: white;
+        transition: background-color 0.3s ease, transform 0.1s ease;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+        transform: scale(1.02);
+      }
+
+      button:disabled {
+        background-color: #bdc3c7;
+        cursor: not-allowed;
+      }
+
+      .correct,
+      .correct:hover {
+        background-color: #2ecc71 !important;
+      }
+
+      .wrong,
+      .wrong:hover {
+        background-color: #e74c3c !important;
+      }
+
+      .answer-btn:last-of-type {
+        margin-bottom: 10px;
+      }
+
+      #question-number {
+        margin-bottom: 15px;
+        font-size: 16px;
+        color: #666;
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+
+      #result-box {
+        margin-top: 20px;
+        font-size: 20px;
+        font-weight: bold;
+        color: #2c3e50;
+        padding: 12px;
+        background-color: #dfefff;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      .hide {
+        display: none;
+      }
+
+      body.dark {
+        background: linear-gradient(135deg, #181818 0%, #0c0c0c 100%);
+        color: #ddd;
+      }
+
+      body.dark .container {
+        background: #1c1c1c;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+      }
+
+      body.dark #question-text {
+        background-color: #353535;
+        color: #f0f0f0;
+        box-shadow: 0 5px 1px rgba(70, 130, 180, 0.5);
+      }
+
+      body.dark #question-number {
+        color: #bbb;
+      }
+
+      body.dark #result-box {
+        background-color: #3a3a3a;
+        color: #eee;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+      }
+
+      body.dark button {
+        background-color: #1b4f72;
+      }
+
+      body.dark button:hover {
+        background-color: #1c5980;
+      }
+
+      body.dark button:disabled {
+        background-color: #555;
+      }
+
+      body.dark .correct,
+      body.dark .correct:hover {
+        background-color: #27ae60;
+      }
+
+      body.dark .wrong,
+      body.dark .wrong:hover {
+        background-color: #c0392b;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="theme-toggle">Dark mode</button>
+
+    <div class="container">
+      <h2 id="quiz-title">Airway Assessment And Management</h2>
+
+      <div id="start-box">
+        <button id="start-btn">Start</button>
+      </div>
+
+      <div id="quiz-box" class="hide">
+        <div id="question-number"></div>
+        <div id="question-text"></div>
+        <div id="answer-buttons" class="btn-grid"></div>
+        <button id="next-btn" disabled>Next</button>
+      </div>
+
+      <div id="result-box" class="hide">
+        <h3>Your Score</h3>
+        <p id="score-text"></p>
+        <button id="try-again-btn">Try Again</button>
+      </div>
+    </div>
+
+    <script>
+      const allQuestions = [
+        // Book Questions
+        {
+          question: "* To open airway......",
+          options: [
+            "chest thrusts",
+            "head tilt-chin left",
+            "back slaps",
+            "none of them",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question: "* What is the first step in airway management?",
+          options: [
+            "Insert an oropharyngeal airway (OPA)",
+            "Perform a head tilt-chin lift maneuver",
+            "Administer oxygen",
+            "Assess the airway for patency",
+          ],
+          correctIndex: 3,
+        },
+        {
+          question: "* Mallampati Score....",
+          options: [
+            "Has 4 stages",
+            "Rough to do with the patient",
+            "Class 1 most difficult to intubate",
+            "Used for scoring ventilation",
+          ],
+          correctIndex: 0,
+        },
+        {
+          question: "* To apply for proper oral airway in a position you must",
+          options: [
+            "Choose the appropriate size",
+            "Open the airway",
+            "Insert upside down in the airway and rotate into place",
+            "All of the above",
+          ],
+          correctIndex: 3,
+        },
+        {
+          question: "* Non-Invasive method for airway management is",
+          options: ["ETT", "Crico-therodetomy", "Face Mask", "FOB intubation"],
+          correctIndex: 2,
+        },
+        {
+          question:
+            "* What is the first step in confirming proper endotracheal tube placement?",
+          options: [
+            "Chest X-ray",
+            "Auscultation of breath sounds",
+            "Capnography",
+            "Pulse oximetry",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "* Which maneuver is used to open the airway in an unresponsive patient without suspected spinal injury?",
+          options: [
+            "Jaw thrust",
+            "Head tilt-chin lift",
+            "Neck extension",
+            "Abdominal thrust",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "* When ventilating an apneic adult patient with a bag-valve-mask device, you must make sure that",
+          options: [
+            "an oral airway device has been inserted, and chest elevation occurred.",
+            "continuous check pulse.",
+            "ventilations occur at a rate of at least 20 breaths/min.",
+            "O2 source was connected in a good flow",
+          ],
+          correctIndex: 0,
+        },
+        {
+          question:
+            "* Snoring respirations in an unresponsive patient are most likely the result of",
+          options: [
+            "foreign body airway obstruction.",
+            "upper airway obstruction by the tongue.",
+            "collapse of the trachea during breathing.",
+            "swelling of the larynx and surrounding structures.",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "* A 60-year-old woman presents with acute respiratory distress. She is alert and oriented, but restless. Her respiratory rate is 26 breaths/min with adequate chest expansion and clear breath sounds. What is the most appropriate method of airway management for this patient?",
+          options: [
+            "Supplemental oxygen with a non-rebreathing mask",
+            "A nasopharyngeal airway and assisted ventilation",
+            "A nasopharyngeal airway and supplemental oxygen",
+            "A nasal cannula with the flowmeter set at 4 to 6 L/min",
+          ],
+          correctIndex: 3,
+        },
+        // Questions
+        {
+          question:
+            "What is the primary purpose of the cardiopulmonary system?",
+          options: [
+            "To regulate blood pressure",
+            "To transport oxygen to tissues and remove CO₂",
+            "To produce hormones for metabolism",
+            "To filter toxins from the blood",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which anatomical feature is most concerning for difficult intubation in obese patients?",
+          options: [
+            "Long neck",
+            "Short, thick neck",
+            "Protruding ears",
+            "Wide jaw",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question: "The 3-3-2 rule assesses which of the following?",
+          options: [
+            "Lung capacity",
+            "Airway patency",
+            "Blood pressure",
+            "Heart rate",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which maneuver is contraindicated in a patient with suspected cervical spine injury?",
+          options: [
+            "Head tilt-chin lift",
+            "Jaw thrust",
+            "Sniffing position",
+            "Abdominal thrust",
+          ],
+          correctIndex: 0,
+        },
+        {
+          question:
+            "What is the most common cause of airway obstruction in a comatose patient?",
+          options: [
+            "Laryngospasm",
+            "Tongue falling",
+            "Foreign body aspiration",
+            "Nasal septum deviation",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "What is an absolute contraindication for nasopharyngeal airway insertion?",
+          options: [
+            "Epistaxis",
+            "Basal skull fracture",
+            "Deviated nasal septum",
+            "Nasal infection",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which of the following is NOT a sign of airway obstruction?",
+          options: [
+            "Noisy breathing",
+            "Equal air entry on auscultation",
+            "Use of accessory muscles",
+            "Cyanosis",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question: "Preoxygenation before intubation should ideally last:",
+          options: ["1 minute", "3 minutes", "5 minutes", "10 minutes"],
+          correctIndex: 2,
+        },
+        {
+          question: "Which airway device does NOT protect against aspiration?",
+          options: [
+            "Endotracheal tube",
+            "Laryngeal mask airway",
+            "Oropharyngeal airway",
+            "Nasopharyngeal airway",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "What is the correct insertion technique for an oropharyngeal airway in adults?",
+          options: [
+            "Insert right-side up with a tongue depressor",
+            "Insert upside down and rotate",
+            "Insert blindly without lubrication",
+            "Insert only in fully conscious patients",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which of the following is a complication of nasopharyngeal airway?",
+          options: [
+            "Laryngospasm",
+            "Gastric distension",
+            "Hypertension",
+            "Bradycardia",
+          ],
+          correctIndex: 0,
+        },
+        {
+          question: "The Mallampati score is assessed with the patient:",
+          options: [
+            "Lying supine",
+            "Sitting upright with tongue protruded",
+            "In the sniffing position",
+            "After saying 'AHH'",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which oxygen delivery device provides the highest FiO₂ (95-100%)?",
+          options: [
+            "Nasal cannula",
+            "Face mask",
+            "Non-rebreathing mask",
+            "Venturi mask",
+          ],
+          correctIndex: 2,
+        },
+        {
+          question: "A patient with a beard is at higher risk for:",
+          options: [
+            "Difficulty intubating",
+            "Difficulty ventilating",
+            "Nasal obstruction",
+            "Laryngospasm",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question: "Which of the following is a surgical airway method?",
+          options: [
+            "Laryngeal mask airway",
+            "Cricothyrotomy",
+            "Nasopharyngeal airway",
+            "Oropharyngeal airway",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question: "The Murphy’s eye is a feature of which airway device?",
+          options: [
+            "Endotracheal tube",
+            "Laryngeal mask airway",
+            "Oropharyngeal airway",
+            "Nasopharyngeal airway",
+          ],
+          correctIndex: 0,
+        },
+        {
+          question: "What is the primary advantage of a Venturi mask?",
+          options: [
+            "Delivers precise oxygen concentrations",
+            "Prevents aspiration",
+            "Allows eating while wearing",
+            "Provides 100% FiO₂",
+          ],
+          correctIndex: 0,
+        },
+        {
+          question:
+            "Which of the following is NOT a contraindication for an oropharyngeal airway?",
+          options: [
+            "Semiconscious patient",
+            "Multiple mandible fractures",
+            "Hard teeth clenching",
+            "Obese patients",
+          ],
+          correctIndex: 3,
+        },
+        {
+          question:
+            "The sniffing position is most beneficial in which patient population?",
+          options: [
+            "Pediatric patients",
+            "Obese patients",
+            "Trauma patients",
+            "Patients with nasal deformities",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which device is used to guide an endotracheal tube in a difficult airway?",
+          options: [
+            "Magill’s forceps",
+            "Bougie",
+            "Laryngeal mask",
+            "Nasal cannula",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "What is the recommended oxygen flow rate for a non-rebreathing mask?",
+          options: ["1-2 L/min", "6-8 L/min", "10-15 L/min", "4-6 L/min"],
+          correctIndex: 2,
+        },
+        {
+          question:
+            "Which of the following is a disadvantage of mask ventilation?",
+          options: [
+            "Protects against aspiration",
+            "Requires only one hand",
+            "May cause gastric distension",
+            "Delivers low FiO₂",
+          ],
+          correctIndex: 2,
+        },
+        {
+          question: "What is the first step in airway management?",
+          options: [
+            "Administer oxygen",
+            "Assess airway patency",
+            "Insert an oral airway",
+            "Begin chest compressions",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which of the following is NOT a component of the 3-3-2 rule?",
+          options: [
+            "Mouth opening ≥ 2 fingers",
+            "Thyromental distance (jaw to neck) ≥ 3 fingers",
+            "Neck circumference ≤ 12 inches",
+            "Mandibular length (jaw wide) ≥ 3 fingers",
+          ],
+          correctIndex: 2,
+        },
+        {
+          question:
+            "Which device is used to remove a foreign body from the airway?",
+          options: [
+            "Bougie",
+            "Magill’s forceps",
+            "Laryngeal mask",
+            "Nasal cannula",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "A patient with a deviated nasal septum should avoid which airway adjunct?",
+          options: [
+            "Oropharyngeal airway",
+            "Nasopharyngeal airway",
+            "Laryngeal mask",
+            "Endotracheal tube",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which of the following is a sign of proper nasopharyngeal airway placement?",
+          options: [
+            "Absence of airflow",
+            "Resistance during insertion",
+            "Feeling airflow in a breathing patient",
+            "Gag reflex stimulation",
+          ],
+          correctIndex: 2,
+        },
+        {
+          question:
+            "What is the primary risk of using an oropharyngeal airway in a semiconscious patient?",
+          options: [
+            "Hypoxia",
+            "Gag reflex and aspiration",
+            "Laryngospasm",
+            "Nasal trauma",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which oxygen delivery device is most suitable for a patient who needs to eat while receiving oxygen?",
+          options: [
+            "Non-rebreathing mask",
+            "Nasal cannula",
+            "Venturi mask",
+            "Simple face mask",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question: "What is the primary function of an Ambu bag?",
+          options: [
+            "To measure oxygen saturation",
+            "To provide manual ventilation",
+            "To suction secretions",
+            "To intubate the trachea",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which of the following is a contraindication for a laryngeal mask airway?",
+          options: [
+            "Full stomach",
+            "Patient with a gag reflex",
+            "Nasal fracture",
+            "Semi-conscious patient",
+          ],
+          correctIndex: 0,
+        },
+        {
+          question:
+            "Which airway assessment tool evaluates tongue size relative to the oral cavity?",
+          options: [
+            "3-3-2 rule",
+            "Mallampati score",
+            "Capnography",
+            "Pulse oximetry",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which of the following is a complication of an oversized nasopharyngeal airway?",
+          options: [
+            "Esophageal placement",
+            "Tongue occlusion",
+            "Tracheal rupture",
+            "Sinusitis",
+          ],
+          correctIndex: 0,
+        },
+        {
+          question:
+            "What is the recommended FiO₂ for a nasal cannula at 6 L/min?",
+          options: ["24%", "36%", "45%", "60%"],
+          correctIndex: 2,
+        },
+        {
+          question:
+            "Which maneuver is used to open the airway in a trauma patient?",
+          options: [
+            "Head tilt-chin lift",
+            "Jaw thrust",
+            "Abdominal thrust",
+            "Chest compression",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Which of the following is NOT a feature of an oropharyngeal airway?",
+          options: [
+            "Hollow center",
+            "Displaces the tongue",
+            "Cuffed design",
+            "Made of hard plastic",
+          ],
+          correctIndex: 2,
+        },
+        {
+          question: "Which device is used for fiberoptic intubation?",
+          options: [
+            "Bougie",
+            "GlideScope",
+            "Magill’s forceps",
+            "Laryngeal mask",
+          ],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "What is the primary risk of using a face mask for oxygenation?",
+          options: [
+            "Skin breakdown",
+            "Aspiration",
+            "Laryngospasm",
+            "Gastric distension",
+          ],
+          correctIndex: 0,
+        },
+        {
+          question:
+            "The Mallampati score is assessed with the patient lying down.",
+          options: ["True", "False"],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "An oropharyngeal airway can be safely used in a fully conscious patient.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question: "Preoxygenation is not necessary before intubation.",
+          options: ["True", "False"],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "A nasopharyngeal airway is contraindicated in basal skull fracture.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question: "The 3-3-2 rule it is a bedside anatomical assessment tool used to predict difficulty in intubation.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question: "A laryngeal mask airway protects against aspiration.",
+          options: ["True", "False"],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Snoring respirations indicate upper airway obstruction by the tongue.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question:
+            "A non-rebreathing mask delivers the highest possible FiO₂.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question: "Jaw thrust is the preferred maneuver for trauma patients.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question: "Magill’s forceps can be used to remove foreign bodies.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question:
+            "A Venturi mask is the most precise oxygen delivery device.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question:
+            "An oropharyngeal airway should be inserted upside down in children.",
+          options: ["True", "False"],
+          correctIndex: 1,
+        },
+        {
+          question:
+            "Capnography (End-tital CO2) is used for confirming ETT placement.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question: "Obesity does not affect airway management.",
+          options: ["True", "False"],
+          correctIndex: 1,
+        },
+        {
+          question: "A beard can interfere with mask ventilation.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question:
+            "A nasopharyngeal airway is preferred in patients with a gag reflex.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question: "The Murphy’s eye prevents tube occlusion.",
+          options: ["True", "False"],
+          correctIndex: 0,
+        },
+        {
+          question: "A nasal cannula can deliver 100% FiO₂.",
+          options: ["True", "False"],
+          correctIndex: 1,
+        },
+        {
+          question: "Cricothyrotomy is a non-surgical airway technique.",
+          options: ["True", "False"],
+          correctIndex: 1,
+        },
+      ];
+
+      let currentQuestionIndex = 0;
+      let score = 0;
+
+      const startBtn = document.getElementById("start-btn");
+      const nextBtn = document.getElementById("next-btn");
+      const tryAgainBtn = document.getElementById("try-again-btn");
+      const quizBox = document.getElementById("quiz-box");
+      const startBox = document.getElementById("start-box");
+      const questionNumberElement = document.getElementById("question-number");
+      const questionText = document.getElementById("question-text");
+      const answerButtons = document.getElementById("answer-buttons");
+      const resultBox = document.getElementById("result-box");
+      const scoreText = document.getElementById("score-text");
+      const themeToggleBtn = document.getElementById("theme-toggle");
+
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+      }
+
+      function isTrueFalseQuestion(questionObj) {
+        const opts = questionObj.options;
+        return (
+          opts.length === 2 && opts.includes("True") && opts.includes("False")
+        );
+      }
+
+      function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        shuffleArray(allQuestions);
+        startBox.classList.add("hide");
+        resultBox.classList.add("hide");
+        quizBox.classList.remove("hide");
+        setNextQuestion();
+      }
+
+      function setNextQuestion() {
+        resetState();
+        if (currentQuestionIndex < allQuestions.length) {
+          showQuestion(allQuestions[currentQuestionIndex]);
+        } else {
+          showResult();
+        }
+      }
+
+      function showQuestion(questionObj) {
+        questionNumberElement.textContent = `Question ${
+          currentQuestionIndex + 1
+        } of ${allQuestions.length}`;
+        questionText.textContent = questionObj.question;
+
+        const optionsWithFlag = questionObj.options.map((opt, i) => ({
+          text: opt,
+          isCorrect: i === questionObj.correctIndex,
+        }));
+
+        if (!isTrueFalseQuestion(questionObj)) {
+          const fixedOptions = [
+            "All of the above",
+            "All are true",
+            "All are false",
+            "All are correct",
+            "All of the answers are correct",
+            "None of the above",
+            "none of them",
+          ];
+          const fixedOptionIndex = optionsWithFlag.findIndex((option) =>
+            fixedOptions.includes(option.text.trim())
+          );
+
+          if (fixedOptionIndex !== -1) {
+            const fixedOption = optionsWithFlag.splice(fixedOptionIndex, 1)[0];
+            shuffleArray(optionsWithFlag);
+            optionsWithFlag.push(fixedOption);
+          } else {
+            shuffleArray(optionsWithFlag);
+          }
+        }
+
+        optionsWithFlag.forEach((option) => {
+          const button = document.createElement("button");
+          button.textContent = option.text;
+          button.classList.add("answer-btn");
+          button.addEventListener("click", () =>
+            selectAnswer(button, option.isCorrect)
+          );
+          answerButtons.appendChild(button);
+        });
+      }
+
+      function resetState() {
+        nextBtn.disabled = true;
+        answerButtons.innerHTML = "";
+      }
+
+      function selectAnswer(button, isCorrect) {
+        const buttons = answerButtons.querySelectorAll("button");
+        buttons.forEach((btn) => (btn.disabled = true));
+
+        if (isCorrect) {
+          button.classList.add("correct");
+          score++;
+        } else {
+          button.classList.add("wrong");
+          buttons.forEach((btn) => {
+            if (
+              btn.textContent ===
+              allQuestions[currentQuestionIndex].options[
+                allQuestions[currentQuestionIndex].correctIndex
+              ]
+            ) {
+              btn.classList.add("correct");
+            }
+          });
+        }
+
+        nextBtn.disabled = false;
+      }
+
+      function showResult() {
+        quizBox.classList.add("hide");
+        resultBox.classList.remove("hide");
+        scoreText.textContent = `${score} out of ${allQuestions.length}`;
+      }
+
+      themeToggleBtn.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+        themeToggleBtn.textContent = document.body.classList.contains("dark")
+          ? "Light mode"
+          : "Dark mode";
+      });
+
+      startBtn.addEventListener("click", startQuiz);
+      nextBtn.addEventListener("click", () => {
+        currentQuestionIndex++;
+        setNextQuestion();
+      });
+      tryAgainBtn.addEventListener("click", startQuiz);
+    </script>
+  </body>
+</html>
